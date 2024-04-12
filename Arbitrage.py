@@ -58,4 +58,7 @@ def find_arbitrage(startToken = "tokenB", amountIn = 5):
     return (amountOut, paths[startToken], balances[startToken])
 
 (amountOut, profitPath, balances) = find_arbitrage("tokenB", 5)
+
 print(f"path: {'->'.join(profitPath)}, tokenB balance={amountOut}")
+
+print(f"Amount along the paths: {balances}")
