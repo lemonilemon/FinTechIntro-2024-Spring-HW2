@@ -1,4 +1,3 @@
-tokens = ["tokenA", "tokenB", "tokenC", "tokenD", "tokenE"]
 liquidity = {
     ("tokenA", "tokenB"): (17, 10),
     ("tokenA", "tokenC"): (11, 7),
@@ -11,9 +10,10 @@ liquidity = {
     ("tokenC", "tokenE"): (10, 8),
     ("tokenD", "tokenE"): (60, 25),
 }
+tokens = ["tokenA", "tokenB", "tokenC", "tokenD", "tokenE"]
 
 dist = { }
-edges = { }
+exchanges = { }
 paths = { }
 balances = { }
 
@@ -22,32 +22,38 @@ for token in tokens:
     paths[token] = []
     balances[token] = []
 
-
-
-for((u, v), (amount1, amount2)) in liquidity.items(): 
-    edges[(u, v)] = amount2/amount1
-    edges[(v, u)] = amount1/amount2
+for ((u, v), (amount1, amount2)) in liquidity.items():
+    exchanges[(u, v)] = (amount1, amount2)
+    exchanges[(v, u)] = (amount2, amount1)
 
 def find_arbitrage(startToken = "tokenB", amountIn = 5):
-    dist[startToken] = 0
     paths[startToken].append(startToken)
     balances[startToken].append(amountIn)
     dist[startToken] = amountIn
 
     for _ in range(len(tokens)):
-        for (u, v) in edges:
-            if v in paths[u]: 
-                continue
-            if dist[u] * edges[(u, v)] > dist[v]:
-                dist[v] = dist[u] * edges[(u, v)]
-                paths[v] = paths[u] + [v]
-                balances[v] = balances[u] + [dist[v]]
+        for u in tokens: 
+            for v in tokens:
+                if u == v: 
+                    continue
+                if v in paths[u]: 
+                    continue
+
+                newbalance = 997 * dist[u] * exchanges[(u, v)][1] / (1000 * exchanges[(u, v)][0] + 997 * dist[u])
+
+                if newbalance > dist[v]:
+                    dist[v] = newbalance
+                    paths[v] = paths[u] + [v]
+                    balances[v] = balances[u] + [dist[v]]
     for token in tokens:
         if(token == startToken): continue
-        if(dist[token] * edges[(token, startToken)] > dist[startToken]):
-            dist[startToken] = dist[token] * edges[(token, startToken)]
-            paths[startToken] = paths[token] + [startToken]
-            balances[startToken] = balances[token] + [dist[startToken]]
+        (u, v) = (token, startToken)
+        newbalance = 997 * dist[u] * exchanges[(u, v)][1] / (1000 * exchanges[(u, v)][0] + 997 * dist[u])
+        if newbalance > dist[v]:
+            dist[v] = newbalance
+            paths[v] = paths[u] + [v]
+            balances[v] = balances[u] + [dist[v]]
+
     amountOut = dist[startToken]
     return (amountOut, paths[startToken], balances[startToken])
 
